@@ -1,6 +1,0 @@
-{
-  "name": "Healthcare Appointment Booking System",
-  "description": "Multi-location, multi-provider healthcare scheduling platform with real-time slot management, automated reminders, HIPAA compliance, and integrated video consultations.",
-  "requestFramePermissions": ["camera", "microphone"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
