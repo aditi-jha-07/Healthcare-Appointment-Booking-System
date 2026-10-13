@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Backend API - Node.js (Express)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: healthcare_api
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/healthcare_booking_db
+      - REDIS_URL=redis://redis:6379
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-AC_MOCK_ACCOUNT_SID}
+      - TWILIO_API_KEY=${TWILIO_API_KEY:-SK_MOCK_API_KEY}
+      - TWILIO_API_SECRET=${TWILIO_API_SECRET:-MOCK_SECRET}
+      - AES_256_SECRET_KEY=${AES_256_SECRET_KEY:-super_secret_32_bytes_aes_key}
+      - JWT_SECRET=${JWT_SECRET:-jwt_access_token_secret}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - healthcare_network
+
+  # Relational Database - PostgreSQL (RDS Emulation)
+  postgres:
+    image: postgres:16-alpine
+    container_name: healthcare_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: healthcare_booking_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d healthcare_booking_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - healthcare_network
+
+  # Distributed Cache & TTL Lock Engine - Redis 7
+  redis:
+    image: redis:7-alpine
+    container_name: healthcare_redis
+    restart: always
+    command: redis-server --appendonly yes --requirepass redispassword
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redispassword", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - healthcare_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  healthcare_network:
+    driver: bridge
