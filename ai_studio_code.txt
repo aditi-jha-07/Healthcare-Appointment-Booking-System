@@ -1,0 +1,6 @@
+server.js linguist-language=JavaScript
+backend/** linguist-language=JavaScript
+db/*.sql linguist-language=SQL
+scripts/*.sh linguist-language=Shell
+src/data/** linguist-vendored=true
+src/types/** linguist-vendored=true
